@@ -110,4 +110,92 @@ impl AuctionContract {
 
     Ok(())
 }
+pub fn finalize_auction(env: &Env, caller: Address) -> Result<(), ContractError> {
+    caller.require_auth();
+
+    let mut auction: Auction = env
+        .storage()
+        .instance()
+        .get(&DataKey::Auction)
+        .ok_or(ContractError::AuctionNotFound)?;
+
+    // Only creator can finalize
+    if caller != auction.creator {
+        return Err(ContractError::NotAuthorized);
+    }
+
+    // Check deadline
+    if env.ledger().timestamp() < auction.deadline {
+        return Err(ContractError::DeadlineNotReached);
+    }
+
+    // If no bids, just close auction
+    if auction.highest_bidder.is_none() {
+        auction.is_active = false;
+
+        env.storage()
+            .instance()
+            .set(&DataKey::Auction, &auction);
+
+        return Ok(());
+    }
+
+    let winner = auction.highest_bidder.clone().unwrap();
+
+    let token_client = token::Client::new(env, &auction.token);
+
+    // Transfer funds to creator (seller)
+    token_client.transfer(
+        &env.current_contract_address(),
+        &auction.creator,
+        &auction.highest_bid,
+    );
+
+    auction.is_active = false;
+
+    env.storage()
+        .instance()
+        .set(&DataKey::Auction, &auction);
+
+    Ok(())
+}
+pub fn cancel_auction(env: &Env, caller: Address) -> Result<(), ContractError> {
+    caller.require_auth();
+
+    let auction: Auction = env
+        .storage()
+        .instance()
+        .get(&DataKey::Auction)
+        .ok_or(ContractError::AuctionNotFound)?;
+
+    if caller != auction.creator {
+        return Err(ContractError::NotAuthorized);
+    }
+
+    if auction.highest_bidder.is_some() {
+        return Err(ContractError::AuctionHasBids);
+    }
+
+    env.storage().instance().remove(&DataKey::Auction);
+
+    Ok(())
+}
+pub fn claim_refund(env: &Env, user: Address) -> Result<(), ContractError> {
+    user.require_auth();
+
+    let auction: Auction = env
+        .storage()
+        .instance()
+        .get(&DataKey::Auction)
+        .ok_or(ContractError::AuctionNotFound)?;
+
+    if let Some(highest) = auction.highest_bidder {
+        if highest == user {
+            return Err(ContractError::NotAuthorized);
+        }
+    }
+
+    // In real version you'd track refunds in storage
+    Ok(())
+}
 }
