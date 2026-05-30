@@ -1,22 +1,55 @@
-# Soroban Project
+#  No-Loss Auction Protocol (Soroban + React)
 
-## Project Structure
+A decentralized auction platform built on **Stellar Soroban smart contracts** with a React frontend.  
+Users can create auctions, place bids, and finalize auctions using Freighter wallet.
 
-This repository uses the recommended structure for a Soroban project:
+---
 
-```text
-.
-├── contracts
-│   └── hello_world
-│       ├── src
-│       │   ├── lib.rs
-│       │   └── test.rs
-│       └── Cargo.toml
-├── Cargo.toml
-└── README.md
-```
+##  Live Features
 
-- New Soroban contracts can be put in `contracts`, each in their own directory. There is already a `hello_world` contract in there to get you started.
-- If you initialized this project with any other example contracts via `--with-example`, those contracts will be in the `contracts` directory as well.
-- Contracts should have their own `Cargo.toml` files that rely on the top-level `Cargo.toml` workspace for their dependencies.
-- Frontend libraries can be added to the top-level directory as well. If you initialized this project with a frontend template via `--frontend-template` you will have those files already included.
+- Create auction on blockchain
+- Place bids using Freighter wallet
+- Auto-refunded bidding logic (no-loss design)
+- Finalize auction after deadline
+- Live auction dashboard
+- Countdown timer
+- Auto-refresh every 5 seconds
+- Leaderboard-style UI
+
+---
+
+## Tech Stack
+
+- Soroban Smart Contracts (Rust)
+- Stellar Testnet
+- React (Vite)
+- Freighter Wallet API
+- Stellar SDK
+
+---
+
+##  Smart Contract Functions
+
+- `create_auction`
+- `place_bid`
+- `finalize_auction`
+- `get_auction`
+- `cancel_auction`
+- `claim_refund`
+
+---
+
+##  Contract Deployment
+
+- **Network:** Stellar Testnet  
+- **ContractID:**CAGLJO3AHFQVELPLULINXYRIPSKMWD3E4XVZUDKLTSO4LPIAJKIE6CAC
+
+
+---
+
+##  How to Run Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
