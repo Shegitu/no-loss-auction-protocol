@@ -53,4 +53,61 @@ impl AuctionContract {
             .get(&DataKey::Auction)
             .unwrap()
     }
+    pub fn place_bid(
+    env: &Env,
+    bidder: Address,
+    amount: i128,
+) -> Result<(), ContractError> {
+
+    bidder.require_auth();
+
+    let mut auction: Auction = env
+        .storage()
+        .instance()
+        .get(&DataKey::Auction)
+        .ok_or(ContractError::AuctionNotFound)?;
+
+    // Check auction active
+    if !auction.is_active {
+        return Err(ContractError::AuctionEnded);
+    }
+
+    // Check deadline
+    if env.ledger().timestamp() > auction.deadline {
+        return Err(ContractError::AuctionEnded);
+    }
+
+    // New bid must be higher
+    if amount <= auction.highest_bid {
+        return Err(ContractError::BidTooLow);
+    }
+
+    let token_client = token::Client::new(env, &auction.token);
+
+    // Take tokens from bidder
+    token_client.transfer(
+        &bidder,
+        &env.current_contract_address(),
+        &amount,
+    );
+
+    // Refund previous bidder
+    if let Some(previous_bidder) = auction.highest_bidder.clone() {
+        token_client.transfer(
+            &env.current_contract_address(),
+            &previous_bidder,
+            &auction.highest_bid,
+        );
+    }
+
+    // Update auction
+    auction.highest_bid = amount;
+    auction.highest_bidder = Some(bidder);
+
+    env.storage()
+        .instance()
+        .set(&DataKey::Auction, &auction);
+
+    Ok(())
+}
 }
